@@ -2,6 +2,8 @@ import React from 'react';
 import { Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { Constants, Location, MapView, Permissions } from 'expo';
 import { Ionicons } from '@expo/vector-icons';
+import { getGoogleMapStyle } from './google-map-style';
+import { getDangerColor } from './getDangerColor';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -12,13 +14,14 @@ export default class App extends React.Component {
       region: {
         latitude: 39.1,
         longitude: -84.51,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.03,
+        latitudeDelta: 0.035,
+        longitudeDelta: 0.020,
       },
       errorMessage: null,
       fireDangers: [],
       foodDangers: [],
       busDangers: [],
+      dangerLevel: 0,
     }
   }
 
@@ -69,23 +72,148 @@ export default class App extends React.Component {
 
   requestDangers(coords) {
     // fetch(`http://hackcincydangerzone.azurewebsites.net/?latitude=${this.state.region.latitude}&longitude=${this.state.region.longitude}`, {
-    fetch(`http://www.dangerzone.tech/?latitude=${this.state.region.latitude}&longitude=${this.state.region.longitude}&searchList=Fire&searchList=Food&searchList=Bus`, {
+    fetch(`http://vpn.jmchn.net:5080/cincy/Food?latitude=${this.state.region.latitude}&longitude=${this.state.region.longitude}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
       },
     })
-    .then((response) => response.json())
+    .then((response) => {
+      let responseJson;
+      try {
+        responseJson = response.json()
+      }
+      catch(e) {
+        console.log('catching error', e);
+        console.log('inside food parse catch');
+        responseJson = {};
+      }
+      return responseJson;
+    })
+    .then((responseJson) => {
+      console.log('response: ', responseJson);
+      this.setState(prevState => ({
+        ...prevState,
+        foodDangers: (responseJson && responseJson.Food) || [],
+        dangerLevel: (responseJson && Math.max(responseJson.danger, this.state.dangerLevel)) || this.state.dangerLevel,
+      }));
+    })
+    .catch((error) => {
+      console.error('Inside promise catch for Food');
+      console.error(error);
+    });
+    fetch(`http://vpn.jmchn.net:5080/cincy/Fire?latitude=${this.state.region.latitude}&longitude=${this.state.region.longitude}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    })
+    .then((response) => {
+      let responseJson;
+      try {
+        responseJson = response.json()
+      }
+      catch(e) {
+        console.log('catching error', e);
+        responseJson = {};
+      }
+      return responseJson;
+    })
     .then((responseJson) => {
       console.log('response: ', responseJson);
       this.setState(prevState => ({
         ...prevState,
         fireDangers: (responseJson && responseJson.Fire) || [],
-        foodDangers: (responseJson && responseJson.Food) || [],
-        busDangers: (responseJson && responseJson.Bus.buses) || [],
+        dangerLevel: (responseJson && Math.max(responseJson.danger, this.state.dangerLevel)) || this.state.dangerLevel
       }));
     })
     .catch((error) => {
+      console.error('Inside promise catch for Fire');
+      console.error(error);
+    });
+    fetch(`http://vpn.jmchn.net:5080/bus?latitude=${this.state.region.latitude}&longitude=${this.state.region.longitude}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      })
+    .then((response) => {
+      let responseJson;
+      try {
+        responseJson = response.json()
+      }
+      catch(e) {
+        console.log('catching error', e);
+        responseJson = {};
+      }
+      return responseJson;
+    })
+    .then((responseJson) => {
+      console.log('response: ', responseJson);
+      this.setState(prevState => ({
+        ...prevState,
+        busDangers: (responseJson && responseJson.buses) || [],
+        dangerLevel: (responseJson && Math.max(responseJson.danger, this.state.dangerLevel)) || this.state.dangerLevel,
+      }));
+    })
+    .catch((error) => {
+      console.error('Inside promise catch for buses');
+      console.error(error);
+    });
+    fetch(`http://vpn.jmchn.net:5080/asteroid?latitude=${this.state.region.latitude}&longitude=${this.state.region.longitude}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      })
+    .then((response) => {
+      let responseJson;
+      try {
+        responseJson = response.json()
+      }
+      catch(e) {
+        console.log('catching error', e);
+        responseJson = {};
+      }
+      return responseJson;
+    })
+    .then((responseJson) => {
+      console.log('response: ', responseJson);
+      this.setState(prevState => ({
+        ...prevState,
+        dangerLevel: (responseJson && Math.max(responseJson.danger, this.state.dangerLevel)) || this.state.dangerLevel,
+      }));
+    })
+    .catch((error) => {
+      console.error('Inside promise catch for buses');
+      console.error(error);
+    });
+    fetch(`http://vpn.jmchn.net:5080/weather?latitude=${this.state.region.latitude}&longitude=${this.state.region.longitude}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      })
+    .then((response) => {
+      let responseJson;
+      try {
+        responseJson = response.json()
+      }
+      catch(e) {
+        console.log('catching error', e);
+        responseJson = {};
+      }
+      return responseJson;
+    })
+    .then((responseJson) => {
+      console.log('response: ', responseJson);
+      this.setState(prevState => ({
+        ...prevState,
+        dangerLevel: (responseJson && Math.max(responseJson.danger, this.state.dangerLevel)) || this.state.dangerLevel,
+      }));
+    })
+    .catch((error) => {
+      console.error('Inside promise catch for buses');
       console.error(error);
     });
   }
@@ -98,6 +226,8 @@ export default class App extends React.Component {
         <MapView
           style={ { flex: 1 } }
           region={ this.state.region }
+          customMapStyle={ getGoogleMapStyle() }
+          provider={MapView.PROVIDER_GOOGLE}
         >
           {this.state.foodDangers.map((danger, index) => (
               <MapView.Marker
@@ -109,7 +239,7 @@ export default class App extends React.Component {
                 title={ danger.violation_comments ? 'That\'s not looking fresh' : 'Enjoy your meal, here!' }
                 description={ danger.violation_comments || 'You\'re safe!' }
               >
-                <Ionicons name="md-pizza" size={32} style={{color: '#D3D91D'}} />
+                <Ionicons name="md-pizza" size={32} style={{color: '#BD6F13'}} />
               </MapView.Marker>
             )
           )}
@@ -123,7 +253,7 @@ export default class App extends React.Component {
                 title={ danger.neighborhood }
                 description={ danger.incident_type_desc || 'You\'re safe!' }
               >
-                <Ionicons name="md-flame" size={32} color="red" />
+                <Ionicons name="md-flame" size={32} color="#ff8000" />
               </MapView.Marker>
             )
           )}
@@ -150,7 +280,16 @@ export default class App extends React.Component {
               longitude: this.state.region.longitude,
             } }
           >
-            <Ionicons name="ios-body" size={32}  style={{color: '#8E477E'}} />
+            <Ionicons
+              name="ios-body"
+              size={40}
+              style={{
+                // borderColor: '#8E477E',
+                // borderRadius: 100,
+                // borderWidth: 20,
+                color: getDangerColor(this.state.dangerLevel)
+              }}
+            />
             {/* <MapView.Callout>
               <MyCustomCalloutView {...marker} />
             </MapView.Callout> */}
