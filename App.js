@@ -124,8 +124,8 @@ export default class App extends React.Component {
             <MapView.Marker
               key={ `bus-${index}` }
               coordinate={ {
-                latitude: parseFloat(danger.latitude),
-                longitude: parseFloat(danger.longitude),
+                latitude: danger.latitude,
+                longitude: danger.longitude,
               } }
               title={ danger.id ? `Bus #${danger.id}` : 'No buses here!' }
               description={ danger.id ? 'You may be run over in this area!' : 'You\'re safe!' }
