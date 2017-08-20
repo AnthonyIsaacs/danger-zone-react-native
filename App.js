@@ -1,6 +1,7 @@
 import React from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { Constants, Location, MapView, Permissions } from 'expo';
+import { Ionicons } from '@expo/vector-icons';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -103,9 +104,11 @@ export default class App extends React.Component {
                 latitude: parseFloat(danger.Latitude),
                 longitude: parseFloat(danger.Longitude),
               } }
-              title={ danger.business_name }
+              title={ danger.violation_comments ? 'That\'s not looking fresh' : 'Enjoy your meal, here!' }
               description={ danger.violation_comments || 'You\'re safe!' }
-            />
+            >
+              <Ionicons name="md-pizza" size={32} style={{color: '#D3D91D'}} />
+            </MapView.Marker>
           )
         )}
         {this.state.fireDangers.map((danger, index) => (
@@ -117,7 +120,9 @@ export default class App extends React.Component {
               } }
               title={ danger.neighborhood }
               description={ danger.incident_type_desc || 'You\'re safe!' }
-            />
+            >
+              <Ionicons name="md-flame" size={32} color="red" />
+            </MapView.Marker>
           )
         )}
         {this.state.busDangers.map((danger, index) => (
@@ -129,7 +134,12 @@ export default class App extends React.Component {
               } }
               title={ danger.id ? `Bus #${danger.id}` : 'No buses here!' }
               description={ danger.id ? 'You may be run over in this area!' : 'You\'re safe!' }
-            />
+            >
+              <Ionicons name="md-bus" size={32} color="black" />
+              <MapView.Callout>
+                <MyCustomCalloutView {...marker} />
+              </MapView.Callout>
+            </MapView.Marker>
           )
         )}
       </MapView>
